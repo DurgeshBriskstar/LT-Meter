@@ -164,23 +164,26 @@ function getLeaveTime() {
         };
     }
 
-    // ===== TABLE FORMAT =====
+    // ===== TABLE FORMAT (e.g. Date | Employee Code | First Punch | Break Hours | Working Hour) =====
 
     const table = document.querySelector("table");
     if (!table) return null;
 
-    const headers = [...table.querySelectorAll("thead th")];
+    const headers = [...table.querySelectorAll("thead th")].map(th => th.innerText.trim());
 
     const findIndex = text =>
-        headers.findIndex(th => th.innerText.includes(text));
+        headers.findIndex(h => h.includes(text));
 
-    const firstIdx = findIndex("First Punch");
+    const firstIdx = findIndex("First Punch") !== -1 ? findIndex("First Punch") : findIndex("First In");
     const breakIdx = findIndex("Break Hours");
 
     if (firstIdx === -1 || breakIdx === -1) return null;
 
     const row = table.querySelector("tbody tr");
+    if (!row) return null;
+
     const cells = row.querySelectorAll("td");
+    if (cells.length <= Math.max(firstIdx, breakIdx)) return null;
 
     const firstInStr = cells[firstIdx].innerText.trim();
     const breakHrsStr = cells[breakIdx].innerText.trim();
