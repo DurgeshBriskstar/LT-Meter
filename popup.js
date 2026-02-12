@@ -123,34 +123,72 @@ function getLeaveTime() {
     const TARGET_SECONDS = 8 * 3600;
 
     function parseClock(str) {
+        if (!str || typeof str !== "string") return 0;
+        str = str.trim();
         if (!str) return 0;
 
-        let [time, meridian] = str.trim().split(" ");
-        let [h, m, s = 0] = time.split(":").map(Number);
+        const parts = str.split(/\s+/);
+        const timePart = parts[0] || "";
+        const meridian = (parts[1] || "").toUpperCase();
 
-        if (meridian === "PM" && h !== 12) h += 12;
-        if (meridian === "AM" && h === 12) h = 0;
+        const [h = 0, m = 0, s = 0] = timePart.split(":").map(Number);
 
-        return h * 3600 + m * 60 + s;
+        let hour = h;
+        if (meridian === "PM" && h !== 12) hour = h + 12;
+        if (meridian === "AM" && h === 12) hour = 0;
+
+        return hour * 3600 + m * 60 + s;
     }
 
-    // ===== CARD FORMAT =====
+    function tryTable(table) {
+        const thead = table.querySelector("thead");
+        const tbody = table.querySelector("tbody");
+        if (!thead || !tbody) return null;
 
-    const dtFields = [...document.querySelectorAll(".inout-tims dt")];
+        const ths = [...thead.querySelectorAll("th")];
+        const headers = ths.map(th => (th.innerText || th.textContent || "").trim());
 
-    if (dtFields.length) {
+        const findIdx = (text) => headers.findIndex(h => h && h.includes(text));
+        const firstIdx = findIdx("First Punch") >= 0 ? findIdx("First Punch") : findIdx("First In");
+        const breakIdx = findIdx("Break Hours");
+
+        if (firstIdx < 0 || breakIdx < 0) return null;
+
+        const row = tbody.querySelector("tr");
+        if (!row) return null;
+
+        const cells = [...row.querySelectorAll("td")];
+        if (cells.length <= Math.max(firstIdx, breakIdx)) return null;
+
+        const firstInStr = (cells[firstIdx].innerText || cells[firstIdx].textContent || "").trim();
+        const breakHrsStr = (cells[breakIdx].innerText || cells[breakIdx].textContent || "").trim();
+        if (!firstInStr) return null;
+
+        const firstInSec = parseClock(firstInStr);
+        const breakSec = parseClock(breakHrsStr);
+        const completion = firstInSec + breakSec + TARGET_SECONDS;
+
+        return {
+            firstInStr: firstInStr,
+            breakSeconds: breakSec,
+            leaveSeconds: completion
+        };
+    }
+
+    function tryCard() {
+        const dtFields = [...document.querySelectorAll(".inout-tims dt")];
+        if (dtFields.length === 0) return null;
 
         function getValue(label) {
-            const dt = dtFields.find(el => el.innerText.includes(label));
+            const dt = dtFields.find(el => (el.innerText || el.textContent || "").includes(label));
             if (!dt) return null;
-
-            const parts = dt.innerText.split("\n").map(v => v.trim());
-            return parts[1];
+            const text = (dt.innerText || dt.textContent || "").trim();
+            const parts = text.split("\n").map(v => v.trim()).filter(Boolean);
+            return parts[1] || null;
         }
 
         const firstIn = getValue("First In");
         const breakHrs = getValue("Break Hours");
-
         if (!firstIn || !breakHrs) return null;
 
         const firstInSec = parseClock(firstIn);
@@ -164,36 +202,13 @@ function getLeaveTime() {
         };
     }
 
-    // ===== TABLE FORMAT (e.g. Date | Employee Code | First Punch | Break Hours | Working Hour) =====
+    // Try TABLE first (covers projectinouttable1 / First Punch + Break Hours format)
+    const tables = [...document.querySelectorAll("table")];
+    for (const table of tables) {
+        const result = tryTable(table);
+        if (result) return result;
+    }
 
-    const table = document.querySelector("table");
-    if (!table) return null;
-
-    const headers = [...table.querySelectorAll("thead th")].map(th => th.innerText.trim());
-
-    const findIndex = text =>
-        headers.findIndex(h => h.includes(text));
-
-    const firstIdx = findIndex("First Punch") !== -1 ? findIndex("First Punch") : findIndex("First In");
-    const breakIdx = findIndex("Break Hours");
-
-    if (firstIdx === -1 || breakIdx === -1) return null;
-
-    const row = table.querySelector("tbody tr");
-    if (!row) return null;
-
-    const cells = row.querySelectorAll("td");
-    if (cells.length <= Math.max(firstIdx, breakIdx)) return null;
-
-    const firstInStr = cells[firstIdx].innerText.trim();
-    const breakHrsStr = cells[breakIdx].innerText.trim();
-    const firstInSec = parseClock(firstInStr);
-    const breakSec = parseClock(breakHrsStr);
-    const completion = firstInSec + breakSec + TARGET_SECONDS;
-
-    return {
-        firstInStr,
-        breakSeconds: breakSec,
-        leaveSeconds: completion
-    };
+    // Then try CARD format (.inout-tims dt)
+    return tryCard();
 }

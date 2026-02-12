@@ -3,15 +3,17 @@
     const TARGET_SECONDS = 8 * 3600;
 
     function parseClock(str) {
+        if (!str || typeof str !== "string") return 0;
+        str = str.trim();
         if (!str) return 0;
-
-        let [time, meridian] = str.trim().split(" ");
-        let [h, m, s = 0] = time.split(":").map(Number);
-
-        if (meridian === "PM" && h !== 12) h += 12;
-        if (meridian === "AM" && h === 12) h = 0;
-
-        return h * 3600 + m * 60 + s;
+        const parts = str.split(/\s+/);
+        const timePart = parts[0] || "";
+        const meridian = (parts[1] || "").toUpperCase();
+        const [h = 0, m = 0, s = 0] = timePart.split(":").map(Number);
+        let hour = h;
+        if (meridian === "PM" && h !== 12) hour = h + 12;
+        if (meridian === "AM" && h === 12) hour = 0;
+        return hour * 3600 + m * 60 + s;
     }
 
     function formatClock(sec) {
@@ -64,20 +66,31 @@
         return;
     }
 
-    // ================= Table Layout =================
-    const table = document.querySelector("table");
-    if (!table) return;
+    // ================= Table Layout (First Punch + Break Hours) =================
+    const tables = [...document.querySelectorAll("table")];
+    let table = null;
+    let firstIdx = -1;
+    let breakIdx = -1;
+
+    for (const t of tables) {
+        const ths = [...t.querySelectorAll("thead th")];
+        const headers = ths.map(th => (th.innerText || th.textContent || "").trim());
+        const findIdx = (text) => headers.findIndex(h => h && h.includes(text));
+        const f = findIdx("First Punch") >= 0 ? findIdx("First Punch") : findIdx("First In");
+        const b = findIdx("Break Hours");
+        if (f >= 0 && b >= 0 && t.querySelector("tbody tr")) {
+            table = t;
+            firstIdx = f;
+            breakIdx = b;
+            break;
+        }
+    }
+
+    if (!table || firstIdx === -1 || breakIdx === -1) return;
 
     const headers = [...table.querySelectorAll("thead th")];
-
-    const findIndex = (text) =>
-        headers.findIndex(th => th.innerText.trim() === text);
-
-    const firstIdx = findIndex("First Punch");
-    const breakIdx = findIndex("Break Hours");
-    const workingIdx = findIndex("Working Hour");
-
-    if (firstIdx === -1 || breakIdx === -1 || workingIdx === -1) return;
+    const workingIdx = headers.findIndex(th => (th.innerText || th.textContent || "").trim().includes("Working Hour"));
+    if (workingIdx === -1) return;
 
     const headerRow = headers[0].parentElement;
 
@@ -94,8 +107,8 @@
     const cells = row.querySelectorAll("td");
 
     const completion =
-        parseClock(cells[firstIdx].innerText) +
-        parseClock(cells[breakIdx].innerText) +
+        parseClock((cells[firstIdx].innerText || cells[firstIdx].textContent || "").trim()) +
+        parseClock((cells[breakIdx].innerText || cells[breakIdx].textContent || "").trim()) +
         TARGET_SECONDS;
 
     const newTd = document.createElement("td");
