@@ -1,0 +1,94 @@
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    width: 320px;
+    min-height: 260px;
+    font-family: "Segoe UI", "Noto Sans Devanagari", system-ui, sans-serif;
+    background: linear-gradient(180deg, #f0f4ff 0%, #e8ecf4 100%);
+    color: #1a1d26;
+}
+
+.card {
+    padding: 24px 22px;
+    text-align: center;
+}
+
+.title {
+    font-size: 20px;
+    font-weight: 700;
+    margin: 0 0 20px 0;
+    color: #1e293b;
+    letter-spacing: 0.02em;
+}
+
+/* Loader */
+.loader {
+    width: 40px;
+    height: 40px;
+    border: 3px solid #c7d2fe;
+    border-top-color: #6366f1;
+    border-radius: 50%;
+    margin: 24px auto;
+    animation: spin 0.75s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Result block */
+.result {
+    font-size: 15px;
+    line-height: 1.6;
+    text-align: left;
+    background: #fff;
+    border-radius: 14px;
+    padding: 18px 20px;
+    box-shadow: 0 4px 20px rgba(99, 102, 241, 0.08);
+    border: 1px solid #e0e4f0;
+    color: #334155;
+}
+
+.result .line {
+    margin-bottom: 14px;
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+}
+
+.result .line:last-of-type {
+    margin-bottom: 0;
+}
+
+.result .line-icon {
+    font-size: 18px;
+    line-height: 1.3;
+    flex-shrink: 0;
+}
+
+.result .line.leave-time {
+    font-weight: 700;
+    font-size: 16px;
+    color: #15803d;
+}
+
+.result .remaining {
+    font-size: 15px;
+    font-weight: 600;
+    color: #b91c1c;
+    margin-top: 16px;
+    padding-top: 14px;
+    border-top: 1px solid #e8eaef;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.hidden {
+    display: none;
+}

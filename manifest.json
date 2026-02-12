@@ -1,0 +1,12 @@
+{
+    "manifest_version": 3,
+    "name": "LT Meter",
+    "version": "2.0",
+    "permissions": [
+        "activeTab",
+        "scripting"
+    ],
+    "action": {
+        "default_popup": "popup.html"
+    }
+}
