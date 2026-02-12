@@ -94,18 +94,22 @@ function startCountdown(leaveData) {
             now.getMinutes() * 60 +
             now.getSeconds();
 
-        let remaining = targetSeconds - nowSeconds;
-        if (remaining < 0) remaining = 0;
+        const remaining = targetSeconds - nowSeconds;
 
-        const h = Math.floor(remaining / 3600);
-        const m = Math.floor((remaining % 3600) / 60);
-        const s = remaining % 60;
+        const h = Math.floor(Math.abs(remaining) / 3600);
+        const m = Math.floor((Math.abs(remaining) % 3600) / 60);
+        const s = Math.abs(remaining) % 60;
+        const timeStr = `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+
+        const remainingText = remaining <= 0
+            ? `टाइम हो गया — अभी तक क्यों बैठे हो? 🏃‍♂️ (-${timeStr})`
+            : `बाकी: ${timeStr}`;
 
         resultDiv.innerHTML = `
             <div class="line"><span class="line-icon">⏰</span> ${line1Msg}</div>
             <div class="line"><span class="line-icon">${line2Icon}</span> ${breakMsg}</div>
             <div class="line leave-time"><span class="line-icon">🚀</span> ${formatClock(targetSeconds)} बजे निकल सकते हो — बस इतना और!</div>
-            <div class="remaining"><span class="line-icon">⏳</span> बाकी: ${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}</div>
+            <div class="remaining"><span class="line-icon">⏳</span> ${remainingText}</div>
         `;
     }
 
